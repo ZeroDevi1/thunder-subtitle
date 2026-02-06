@@ -2,6 +2,11 @@ name: Build Binaries
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "要构建/发布的 tag（例如 v0.2.1）。留空则仅在 tag push 触发。"
+        required: false
+        type: string
   push:
     tags:
       - "v*"
@@ -18,6 +23,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # 如果是手动触发并指定了 tag，则从该 tag 构建；否则使用当前 ref（tag push 时就是 tag）。
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag != '' && inputs.tag || github.ref }}
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
@@ -36,12 +44,14 @@ jobs:
             dist/*
 
   release:
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.tag != '')
     needs: build
     runs-on: ubuntu-latest
     #以此处显式声明为准，覆盖全局默认设置
     permissions:
       contents: write  # 👈 关键：允许创建 Release 和 Tag
+    env:
+      TAG_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.tag != '' && inputs.tag || github.ref_name }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -57,12 +67,20 @@ jobs:
 
           # Note: different OS builds produce the same base filename (thunder-subtitle),
           # but GitHub release assets must have unique names. Rename them here.
+          # Keep this resilient to artifact dir name changes by scanning.
+          if [[ -d artifacts ]]; then
+            find artifacts -maxdepth 2 -type f -print
+          fi
+
+          # Linux / macOS
           if [[ -f "artifacts/thunder-subtitle-ubuntu-latest/thunder-subtitle" ]]; then
             cp -f "artifacts/thunder-subtitle-ubuntu-latest/thunder-subtitle" "release/thunder-subtitle-linux-x86_64"
           fi
           if [[ -f "artifacts/thunder-subtitle-macos-latest/thunder-subtitle" ]]; then
             cp -f "artifacts/thunder-subtitle-macos-latest/thunder-subtitle" "release/thunder-subtitle-macos-x86_64"
           fi
+
+          # Windows
           if [[ -f "artifacts/thunder-subtitle-windows-latest/thunder-subtitle.exe" ]]; then
             cp -f "artifacts/thunder-subtitle-windows-latest/thunder-subtitle.exe" "release/thunder-subtitle-windows-x86_64.exe"
           fi
@@ -73,5 +91,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: ${{ env.TAG_NAME }}
           files: |
             release/*
