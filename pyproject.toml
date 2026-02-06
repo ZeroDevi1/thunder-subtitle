@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "thunder-subtitle-cli"
+version = "0.1.0"
+description = "迅雷字幕（Xunlei/Thunder）搜索与下载工具（含 TUI 菜单）。"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "httpx>=0.27.0",
+  "typer>=0.12.3",
+  "rich>=13.7.1",
+  "questionary>=2.0.1",
+  "pysmb>=1.2.9",
+]
+
+[project.scripts]
+thunder-subtitle = "thunder_subtitle_cli.cli:app"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.2.0",
+  "respx>=0.21.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/thunder_subtitle_cli"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --capture=no"
+markers = [
+  "integration: networked tests (disabled by default; set RUN_SMB_TESTS=1)",
+]
