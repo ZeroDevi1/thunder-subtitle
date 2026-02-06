@@ -39,15 +39,39 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
+    #以此处显式声明为准，覆盖全局默认设置
+    permissions:
+      contents: write  # 👈 关键：允许创建 Release 和 Tag
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
+      - name: Prepare release files (unique names)
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf release
+          mkdir -p release
+
+          # Note: different OS builds produce the same base filename (thunder-subtitle),
+          # but GitHub release assets must have unique names. Rename them here.
+          if [[ -f "artifacts/thunder-subtitle-ubuntu-latest/thunder-subtitle" ]]; then
+            cp -f "artifacts/thunder-subtitle-ubuntu-latest/thunder-subtitle" "release/thunder-subtitle-linux-x86_64"
+          fi
+          if [[ -f "artifacts/thunder-subtitle-macos-latest/thunder-subtitle" ]]; then
+            cp -f "artifacts/thunder-subtitle-macos-latest/thunder-subtitle" "release/thunder-subtitle-macos-x86_64"
+          fi
+          if [[ -f "artifacts/thunder-subtitle-windows-latest/thunder-subtitle.exe" ]]; then
+            cp -f "artifacts/thunder-subtitle-windows-latest/thunder-subtitle.exe" "release/thunder-subtitle-windows-x86_64.exe"
+          fi
+
+          # Checksums for users.
+          (cd release && sha256sum * > SHA256SUMS.txt)
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/**/*
-
+            release/*
