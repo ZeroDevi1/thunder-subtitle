@@ -10,6 +10,29 @@
 uv sync --project tools/thunder_subtitle_cli
 ```
 
+## 构建可执行文件（二进制）
+
+可以使用 PyInstaller 构建当前平台的单文件可执行程序（注意：**无法在一台机器上交叉编译出三端可执行文件**，Linux/Windows/macOS 需要分别在对应系统上构建；本仓库也提供了 GitHub Actions 自动构建）。
+
+### 1) 本地构建（当前系统）
+
+```bash
+# 安装包含构建工具的依赖（pyinstaller 在 dev 组）
+uv sync --project tools/thunder_subtitle_cli --group dev
+
+# 生成 dist/thunder-subtitle（Windows 下为 dist/thunder-subtitle.exe）
+uv run --project tools/thunder_subtitle_cli -- python tools/thunder_subtitle_cli/scripts/build_exe.py
+```
+
+输出目录：`tools/thunder_subtitle_cli/dist/`
+
+### 2) GitHub Actions 三端构建（推荐）
+
+工作流：`.github/workflows/build-binaries.yml`
+
+- 手动触发：在 GitHub Actions 页面点击 “Run workflow”
+- 自动发布：推送 tag（例如 `v0.1.0`）会自动在 Linux/Windows/macOS 三端构建并把产物上传到 Release
+
 ### 1) 默认进入 TUI（推荐）
 
 在交互式终端（TTY）里，无参数运行会进入菜单（搜索 / 下载 / 批量下载 / 退出）：
@@ -73,4 +96,3 @@ git push git@github.com:ZeroDevi1/thunder-subtitle.git thunder-subtitle-main:mai
 ```
 
 之后你就可以在独立仓库里继续迭代（例如改名、清理 history、加 CI 等）。
-

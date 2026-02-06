@@ -23,6 +23,7 @@ thunder-subtitle = "thunder_subtitle_cli.cli:app"
 dev = [
   "pytest>=8.2.0",
   "respx>=0.21.1",
+  "pyinstaller>=6.10.0",
 ]
 
 [tool.hatch.build.targets.wheel]
