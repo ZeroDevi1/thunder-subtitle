@@ -54,5 +54,4 @@ async def download_with_retries(
             if attempt >= retries:
                 break
             await asyncio.sleep(retry_sleep_s * (attempt + 1))
-    raise ThunderAPIError(f"Download failed after retries: {last_err}") from last_err
-
+    raise ThunderAPIError(f"下载失败（已重试 {retries} 次）：{last_err}") from last_err

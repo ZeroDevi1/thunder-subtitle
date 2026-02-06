@@ -138,7 +138,7 @@ def download(
     if json_out:
         typer.echo(json.dumps(res, ensure_ascii=False, indent=2))
         raise typer.Exit(code=0)
-    Console().print(f"Saved: {res['saved_path']}")
+    Console().print(f"已保存：{res['saved_path']}")
 
 
 @app.command()
